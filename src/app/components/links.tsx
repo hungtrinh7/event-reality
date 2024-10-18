@@ -3,11 +3,32 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
-import { useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import useUnifiedSession from "./Auth/useUnifiedSession";
+import { supabase } from "../../../lib/initSupabase";
 
 export function Links() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, user, provider } = useUnifiedSession();
+
+  const handleSupabaseLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  const handleNextAuthLogout = () => {
+    signOut();
+  };
+
+  const handleLogout = () => {
+    if (provider === "google") {
+      handleNextAuthLogout();
+    } else if (provider === "supabase") {
+      handleSupabaseLogout();
+    }
+  };
 
   return (
     <nav>
@@ -25,7 +46,7 @@ export function Links() {
             Create new event
           </Link>
         </li>
-        {status !== "authenticated" && (
+        {!isAuthenticated && (
           <li>
             <Link
               className={`link ${pathname === "/login" ? "active" : ""}`}
@@ -36,7 +57,9 @@ export function Links() {
           </li>
         )}
       </ul>
-      {status === "authenticated" && <LogoutButton />}
+      {isAuthenticated && (
+        <LogoutButton user={user} handleLogout={handleLogout} />
+      )}
     </nav>
   );
 }
