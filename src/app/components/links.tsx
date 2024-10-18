@@ -2,9 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import LogoutButton from "./LogoutButton";
+import { useSession } from "next-auth/react";
 
 export function Links() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
 
   return (
     <nav>
@@ -22,7 +25,18 @@ export function Links() {
             Create new event
           </Link>
         </li>
+        {status !== "authenticated" && (
+          <li>
+            <Link
+              className={`link ${pathname === "/login" ? "active" : ""}`}
+              href="/login"
+            >
+              Login
+            </Link>
+          </li>
+        )}
       </ul>
+      {status === "authenticated" && <LogoutButton />}
     </nav>
   );
 }
