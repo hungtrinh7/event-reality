@@ -1,10 +1,12 @@
 import React, { FormEvent, useState } from "react";
 import { supabase } from "../../../lib/initSupabase";
+import useUnifiedSession from "../components/Auth/useUnifiedSession";
 
 const Create = () => {
   const [errorText, setErrorText] = useState("");
   const [responseText, setResponseText] = useState("");
   const [responseState, setResponseState] = useState(false);
+  const { isAuthenticated, user, provider } = useUnifiedSession();
 
   const [newEvent, setNewEvent] = useState({
     name: "",
@@ -13,6 +15,7 @@ const Create = () => {
     category: "",
     type: "",
     description: "",
+    authorId: "",
   });
 
   // const schema = z.object({
@@ -27,7 +30,11 @@ const Create = () => {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
+    const { data: userId } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", user?.email);
+
     const { data, error } = await supabase
       .from("events")
       .insert([
@@ -38,6 +45,7 @@ const Create = () => {
           category: newEvent.category,
           type: newEvent.type,
           description: newEvent.description,
+          author_id: parseInt(userId?.[0].id),
         },
       ])
       .select();
