@@ -7,6 +7,8 @@ export default function useUnifiedSession() {
 
   // If the user is logged in via NextAuth (Google)
   if (nextAuthSession) {
+    localStorage.setItem("userEmail", nextAuthSession.user?.email ?? "");
+
     return {
       isAuthenticated: true,
       user: nextAuthSession.user,
@@ -16,6 +18,8 @@ export default function useUnifiedSession() {
 
   // If the user is connected via Supabase (email/password)
   if (supabaseSession) {
+    localStorage.setItem("userEmail", supabaseSession.user?.email ?? "");
+
     return {
       isAuthenticated: true,
       user: supabaseSession.user,

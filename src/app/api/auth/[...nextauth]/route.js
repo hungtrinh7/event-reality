@@ -11,7 +11,6 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("Signing in", user, account, profile);
       try {
         // Checks if user already exists in database
         const { data: existingUser, error: selectError } = await supabase
@@ -33,8 +32,6 @@ export const authOptions = {
           if (insertError) {
             throw new Error(`Error inserting user : ${insertError.message}`);
           }
-
-          console.log("New user added :", insertedUser);
         }
 
         // If everything is ok, authorize authentication

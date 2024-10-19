@@ -81,7 +81,10 @@ export default function Login() {
           Sign in
         </button>
         <button
-          onClick={() => signIn("google", { callbackUrl: "/events" })}
+          onClick={(e) => {
+            e.preventDefault();
+            signIn("google", { callbackUrl: "/events" });
+          }}
           className="w-full py-2 mt-2 text-white bg-black rounded-md hover:bg-black"
         >
           Sign in with Google

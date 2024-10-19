@@ -6,11 +6,19 @@ import Date from "../../app/components/date";
 type Events = Database["public"]["Tables"]["events"]["Row"];
 
 const List = () => {
-  const [events, setEvents] = useState<Events[]>([]);
+  const [events, setEvents] = useState<Events[] | null>([]);
 
   useEffect(() => {
     const callEvents = async () => {
-      const { data: events, error } = await supabase.from("events").select("*");
+      const { data: userId } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", localStorage.getItem("userEmail"));
+
+      const { data: events, error } = await supabase
+        .from("events")
+        .select("*")
+        .eq("author_id", parseInt(userId?.[0].id));
       setEvents(events);
     };
     callEvents();
@@ -19,7 +27,7 @@ const List = () => {
   return (
     <div>
       <h1 className="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-        List of events
+        My events
       </h1>
       <table id="table-auto border-collapse">
         <thead>

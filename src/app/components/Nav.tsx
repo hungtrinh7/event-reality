@@ -28,6 +28,7 @@ export function Nav() {
     } else if (provider === "supabase") {
       handleSupabaseLogout();
     }
+    localStorage.removeItem("userMail");
   };
 
   return (
