@@ -8,6 +8,20 @@ export type Json =
 
 export interface Database {
   public: {
+    event: {
+      id: number;
+      created_at: string;
+      name: string;
+      event_date_at: string;
+      event_date_end: string;
+      author_id: number | null;
+      event_place: string;
+      category: string;
+      type: string;
+      group_id: number | null;
+      description: string;
+      images: string;
+    };
     Tables: {
       events: {
         Row: {

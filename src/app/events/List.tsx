@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Database } from "../../../lib/schema";
 import { supabase } from "../../../lib/initSupabase";
 import Date from "../../app/components/date";
+import Link from "next/link";
 
 type Events = Database["public"]["Tables"]["events"]["Row"];
 
@@ -13,12 +14,13 @@ const List = () => {
       const { data: userId } = await supabase
         .from("users")
         .select("id")
-        .eq("email", localStorage.getItem("userEmail"));
+        .eq("email", localStorage.getItem("userEmail"))
+        .single();
 
       const { data: events, error } = await supabase
         .from("events")
         .select("*")
-        .eq("author_id", parseInt(userId?.[0].id));
+        .eq("author_id", parseInt(userId?.id));
       setEvents(events);
     };
     callEvents();
@@ -65,7 +67,9 @@ const List = () => {
                 <td className="font-medium text-gray-900 whitespace-nowrap dark:text-white">
                   {event.id}
                 </td>
-                <td>{event.name}</td>
+                <td>
+                  <Link href={`/events/${event.id}`}>{event.name}</Link>
+                </td>
                 <td>{event.category}</td>
                 <td>{event.type}</td>
 

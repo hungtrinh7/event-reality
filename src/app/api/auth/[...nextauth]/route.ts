@@ -1,15 +1,23 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { supabase } from "../../../../../lib/initSupabase";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
+    async jwt({ token, account }) {
+      console.log("JWT Callback", { token, account });
+      return token;
+    },
+    async session({ session, token }) {
+      console.log("Session Callback", { session, token });
+      return session;
+    },
     async signIn({ user, account, profile }) {
       try {
         // Checks if user already exists in database
@@ -42,6 +50,7 @@ export const authOptions = {
       }
     },
   },
+  debug: true,
   secret: process.env.NEXTAUTH_SECRET,
 };
 

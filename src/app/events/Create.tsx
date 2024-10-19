@@ -33,7 +33,8 @@ const Create = () => {
     const { data: userId } = await supabase
       .from("users")
       .select("id")
-      .eq("email", user?.email);
+      .eq("email", user?.email)
+      .single();
 
     const { data, error } = await supabase
       .from("events")
@@ -45,7 +46,7 @@ const Create = () => {
           category: newEvent.category,
           type: newEvent.type,
           description: newEvent.description,
-          author_id: parseInt(userId?.[0].id),
+          author_id: parseInt(userId?.id),
         },
       ])
       .select();
