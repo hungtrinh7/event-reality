@@ -3,43 +3,48 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabase } from "../../../lib/initSupabase";
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setLoading(true);
+    setErrorMessage(null);
 
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      // Calling Supabase login method with email and password
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      router.push("/events");
-    } else {
-      setError(data.error);
+      if (error) {
+        setErrorMessage(error.message);
+      } else {
+        router.push("/events");
+      }
+    } catch (error) {
+      setErrorMessage("An error has occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleLogin}
         className="w-full max-w-md p-8 bg-white shadow-md"
       >
         <h2 className="mb-6 text-2xl font-semibold text-center">Login</h2>
 
-        {error && <p className="mb-4 text-red-500">{error}</p>}
+        {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
 
         <div className="mb-4">
           <label htmlFor="email" className="block text-sm font-medium">

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../../lib/initSupabase";
+import { Session } from "@supabase/supabase-js";
 
 const useSupabaseSession = () => {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const fetchSession = async () => {

@@ -1,5 +1,5 @@
-import useSupabaseSession from "./UseSupabaseSession";
 import useNextAuthSession from "./useNextAuthSession";
+import useSupabaseSession from "./useSupabaseSession";
 
 export default function useUnifiedSession() {
   const supabaseSession = useSupabaseSession(); // session for Supabase users
