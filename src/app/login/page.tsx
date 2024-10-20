@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "../../../lib/initSupabase";
+import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
@@ -89,6 +90,12 @@ export default function Login() {
         >
           Sign in with Google
         </button>
+        <p className="mt-4 text-center">
+          Don't have an account?{" "}
+          <Link href={"/register"} className="text-blue-500 hover:underline">
+            Sign up!
+          </Link>
+        </p>
       </form>
     </div>
   );

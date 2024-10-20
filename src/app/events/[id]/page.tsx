@@ -11,13 +11,13 @@ type Event = Database["public"]["event"];
 const Page = ({ params }: { params: { id: number } }) => {
   const [event, setEvent] = useState<Event | null>(null);
   const router = useRouter();
-  const { isAuthenticated, user, provider } = useUnifiedSession();
+  const { isAuthenticated, user } = useUnifiedSession();
 
   useEffect(() => {
     const getEvent = async () => {
       let { data: event, error } = await supabase
         .from("events")
-        .select("*")
+        .select("*, users(id,email,name)")
         .eq("id", params.id)
         .single();
       setEvent(event);
@@ -47,6 +47,7 @@ const Page = ({ params }: { params: { id: number } }) => {
               <h1 className="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
                 {event.name}
               </h1>
+              <p>Host: {event.users.name || "unknown"}</p>
               <p>Category: {event.category}</p>
               <p>Type: {event.type}</p>
               <p>Place: {event.event_place}</p>
@@ -60,7 +61,7 @@ const Page = ({ params }: { params: { id: number } }) => {
               <p>
                 Date created: <FormatDate dateString={event.created_at} />
               </p>
-              {isAuthenticated && (
+              {isAuthenticated && user?.email === event.users.email && (
                 <>
                   <button
                     type="button"

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/initSupabase";
 import { Database } from "../../lib/schema";
 import Date from "./components/date";
+import Link from "next/link";
 
 type Events = Database["public"]["Tables"]["events"]["Row"];
 
@@ -11,7 +12,9 @@ export default function Home() {
 
   useEffect(() => {
     const callEvents = async () => {
-      const { data: events, error } = await supabase.from("events").select("*");
+      const { data: events, error } = await supabase
+        .from("events")
+        .select("*, users(name)");
       setEvents(events);
     };
     callEvents();
@@ -30,6 +33,9 @@ export default function Home() {
               <tr>
                 <th>
                   <span className="flex items-center">ID</span>
+                </th>
+                <th>
+                  <span className="flex items-center">Host</span>
                 </th>
                 <th>
                   <span className="flex items-center">Name</span>
@@ -61,10 +67,12 @@ export default function Home() {
                     <td className="font-medium text-gray-900 whitespace-nowrap dark:text-white">
                       {event.id}
                     </td>
-                    <td>{event.name}</td>
+                    <td>{event.users.name}</td>
+                    <td>
+                      <Link href={`/events/${event.id}`}>{event.name}</Link>
+                    </td>
                     <td>{event.category}</td>
                     <td>{event.type}</td>
-
                     <td>
                       <Date dateString={event.event_date_at} />
                     </td>

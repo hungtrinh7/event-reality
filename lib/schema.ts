@@ -6,6 +6,12 @@ export type Json =
   | { [key: string]: Json }
   | Json[];
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface Database {
   public: {
     event: {
@@ -21,6 +27,7 @@ export interface Database {
       group_id: number | null;
       description: string;
       images: string;
+      users: User;
     };
     Tables: {
       events: {
@@ -37,6 +44,7 @@ export interface Database {
           group_id: number | null;
           description: string;
           images: string;
+          users: User;
         };
         Insert: {
           id?: number;
