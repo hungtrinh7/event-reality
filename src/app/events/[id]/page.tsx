@@ -12,6 +12,7 @@ const Page = ({ params }: { params: { id: number } }) => {
   const [event, setEvent] = useState<Event | null>(null);
   const router = useRouter();
   const { isAuthenticated, user } = useUnifiedSession();
+  const [hasJoined, setHasJoined] = useState<boolean>(false);
 
   useEffect(() => {
     const getEvent = async () => {
@@ -25,6 +26,25 @@ const Page = ({ params }: { params: { id: number } }) => {
     getEvent();
   }, []);
 
+  useEffect(() => {
+    const getParticipateEvent = async () => {
+      const response = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", localStorage.getItem("userEmail"))
+        .single();
+
+      const { data: participateEvent } = await supabase
+        .from("participate_events")
+        .select("*")
+        .eq("event_id", event?.id)
+        .eq("user_id", response.data?.id)
+        .single();
+      setHasJoined(participateEvent ? true : false);
+    };
+    getParticipateEvent();
+  }, [event]);
+
   const handleDeleteEvent = async () => {
     const { error } = await supabase
       .from("events")
@@ -35,6 +55,52 @@ const Page = ({ params }: { params: { id: number } }) => {
       console.error(error);
     } else {
       router.push("/events");
+    }
+  };
+
+  const handleJoinEvent = async () => {
+    const response = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", user?.email)
+      .single();
+
+    const { data: exists } = await supabase
+      .from("participate_events")
+      .select("*")
+      .eq("event_id", event?.id)
+      .eq("user_id", response.data.id)
+      .single();
+
+    if (!exists) {
+      const { error } = await supabase
+        .from("participate_events")
+        .insert([{ event_id: event?.id, user_id: response.data.id }])
+        .select();
+      setHasJoined(true);
+
+      if (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const handleJoinEventAlready = async () => {
+    const response = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", user?.email)
+      .single();
+
+    const { error } = await supabase
+      .from("participate_events")
+      .delete()
+      .eq("event_id", event?.id)
+      .eq("user_id", response.data.id);
+    setHasJoined(false);
+
+    if (error) {
+      console.error(error);
     }
   };
 
@@ -61,6 +127,24 @@ const Page = ({ params }: { params: { id: number } }) => {
               <p>
                 Date created: <FormatDate dateString={event.created_at} />
               </p>
+              {isAuthenticated &&
+                (hasJoined ? (
+                  <button
+                    type="button"
+                    className="focus:outline-none text-white bg-sky-700 hover:bg-sky-800 focus:ring-4 focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-900"
+                    onClick={handleJoinEventAlready}
+                  >
+                    You've already joined this event!
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="focus:outline-none text-white bg-sky-700 hover:bg-sky-800 focus:ring-4 focus:ring-sky-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-900"
+                    onClick={handleJoinEvent}
+                  >
+                    Join this event!
+                  </button>
+                ))}
               {isAuthenticated && user?.email === event.users.email && (
                 <>
                   <button

@@ -4,7 +4,7 @@ import { supabase } from "../../../../../lib/initSupabase";
 import { Database } from "../../../../../lib/schema";
 import { z } from "zod";
 import Spinner from "@/app/components/UI/Spinner";
-import Alerts from "@/app/components/UI/alerts";
+import Alerts from "@/app/components/UI/Alerts";
 import { eventCategories, eventTypes } from "../../../../../lib/data";
 
 type Event = Database["public"]["Tables"]["events"]["Update"];
@@ -167,7 +167,9 @@ const Page = ({ params }: { params: { id: number } }) => {
                   }}
                 >
                   {eventCategories.map((category) => (
-                    <option value={category}>{category}</option>
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
                   ))}
                 </select>
                 {errorText && errorText.hasOwnProperty("category") && (
@@ -226,7 +228,9 @@ const Page = ({ params }: { params: { id: number } }) => {
                   }}
                 >
                   {eventTypes.map((type) => (
-                    <option value={type}>{type}</option>
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
                   ))}
                 </select>
                 {errorText && errorText.hasOwnProperty("type") && (

@@ -45,7 +45,10 @@ export const authOptions: NextAuthOptions = {
         // If everything is ok, authorize authentication
         return true;
       } catch (error) {
-        console.error("An error has occurred :", error.message);
+        if (error instanceof Error) {
+          console.error("An error has occurred :", error.message);
+        }
+
         return false; // Blocks authentication in case of error
       }
     },

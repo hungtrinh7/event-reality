@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 import { signOut } from "next-auth/react";
@@ -10,6 +10,7 @@ import { supabase } from "../../../lib/initSupabase";
 export function Nav() {
   const pathname = usePathname();
   const { isAuthenticated, user, provider } = useUnifiedSession();
+  const router = useRouter();
 
   const handleSupabaseLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -29,6 +30,7 @@ export function Nav() {
       handleSupabaseLogout();
     }
     localStorage.removeItem("userMail");
+    router.push("/");
   };
 
   return (

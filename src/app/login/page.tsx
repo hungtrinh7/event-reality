@@ -5,18 +5,23 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "../../../lib/initSupabase";
 import Link from "next/link";
+import Spinner from "../components/UI/Spinner";
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage(null);
+
+    if (loading) {
+      return <Spinner />;
+    }
 
     try {
       // Calling Supabase login method with email and password

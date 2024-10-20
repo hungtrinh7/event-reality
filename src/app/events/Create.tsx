@@ -2,9 +2,9 @@ import React, { FormEvent, useRef, useState } from "react";
 import { supabase } from "../../../lib/initSupabase";
 import useUnifiedSession from "../components/Auth/useUnifiedSession";
 import { z } from "zod";
-import Alerts from "../components/UI/alerts";
 import Spinner from "../components/UI/Spinner";
 import { eventCategories, eventTypes } from "../../../lib/data";
+import Alerts from "../components/UI/Alerts";
 
 interface initialStateMessage {
   name: string;
@@ -141,7 +141,9 @@ const Create = () => {
               }}
             >
               {eventCategories.map((category) => (
-                <option value={category}>{category}</option>
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
             {errorText && errorText.hasOwnProperty("category") && (
@@ -198,7 +200,9 @@ const Create = () => {
               }}
             >
               {eventTypes.map((type) => (
-                <option value={type}>{type}</option>
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
             {errorText && errorText.hasOwnProperty("type") && (
