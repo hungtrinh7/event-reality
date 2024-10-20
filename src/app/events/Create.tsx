@@ -1,61 +1,105 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useRef, useState } from "react";
 import { supabase } from "../../../lib/initSupabase";
 import useUnifiedSession from "../components/Auth/useUnifiedSession";
+import { z } from "zod";
+import Alerts from "../components/UI/alerts";
+import Spinner from "../components/UI/Spinner";
+
+interface initialStateMessage {
+  name: string;
+  event_date_at: string;
+  event_date_end: string;
+  event_place: string;
+  category: string;
+  type: string;
+  description: string;
+}
 
 const Create = () => {
-  const [errorText, setErrorText] = useState("");
+  const [errorText, setErrorText] = useState<initialStateMessage | null>(null);
   const [responseText, setResponseText] = useState("");
   const [responseState, setResponseState] = useState(false);
-  const { isAuthenticated, user, provider } = useUnifiedSession();
+  const { user } = useUnifiedSession();
+  const ref = useRef<HTMLFormElement>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [newEvent, setNewEvent] = useState({
-    name: "",
-    eventDateAt: "",
-    eventDateEnd: "",
-    category: "",
-    type: "",
-    description: "",
-    authorId: "",
+  const schema = z.object({
+    name: z.string().min(10),
+    event_date_at: z.string(),
+    event_date_end: z.string(),
+    category: z.string().min(4),
+    type: z.string(),
+    description: z.string(),
+    event_place: z.string(),
   });
 
-  // const schema = z.object({
-  //   name: z.string(),
-  //   eventDateAt: z.string(),
-  //   eventDateEnd: z.string(),
-  //   category: z.string(),
-  //   type: z.string(),
-  //   description: z.string(),
-  // });
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+    if (isLoading) {
+      return <Spinner />;
+    }
 
-    const { data: userId } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", user?.email)
-      .single();
+    try {
+      const formData = new FormData(e.currentTarget);
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert([
-        {
-          name: newEvent.name,
-          event_date_at: newEvent.eventDateAt,
-          event_date_end: newEvent.eventDateEnd,
-          category: newEvent.category,
-          type: newEvent.type,
-          description: newEvent.description,
-          author_id: parseInt(userId?.id),
-        },
-      ])
-      .select();
+      const validatedFields = schema.safeParse({
+        name: formData.get("name"),
+        event_date_at: formData.get("event_date_at"),
+        event_date_end: formData.get("event_date_end"),
+        category: formData.get("category"),
+        type: formData.get("type"),
+        description: formData.get("description"),
+        event_place: formData.get("event_place"),
+      });
 
-    setResponseState(true);
-    if (error) {
-      setResponseText("Error: " + error);
-    } else {
-      setResponseText("Your event has been added!");
+      if (!validatedFields.success) {
+        const fieldErrors = validatedFields.error.flatten().fieldErrors;
+        setErrorText(fieldErrors);
+
+        return false;
+      }
+
+      const { data: userId } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", user?.email)
+        .single();
+
+      const { data, error } = await supabase
+        .from("events")
+        .insert([
+          {
+            name: formData.get("name"),
+            event_date_at: formData.get("event_date_at"),
+            event_date_end: formData.get("event_date_end"),
+            category: formData.get("category"),
+            event_place: formData.get("event_place"),
+            type: formData.get("type"),
+            description: formData.get("description"),
+            author_id: parseInt(userId?.id),
+          },
+        ])
+        .select();
+
+      setResponseState(true);
+      ref.current?.reset();
+      if (error) {
+        setResponseText("Error: " + error);
+      } else {
+        setResponseText("Your event has been added!");
+      }
+    } catch (error) {
+      // Capture the error message to display to the user
+      if (error instanceof Error) {
+        let errorMessage = error.message;
+        setError(errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -65,7 +109,7 @@ const Create = () => {
         Create a new event!
       </h1>
 
-      <form onSubmit={onSubmit} className="w-full max-w-lg">
+      <form ref={ref} onSubmit={onSubmit} className="w-full max-w-lg">
         <div className="flex flex-wrap -mx-3 mb-6">
           <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -75,13 +119,14 @@ const Create = () => {
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
               type="text"
               placeholder="Name event"
-              value={newEvent.name}
               name="name"
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({ ...newEvent, name: e.target.value });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("name") && (
+              <Alerts message={errorText.name[0]} />
+            )}
           </div>
           <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -92,12 +137,13 @@ const Create = () => {
               type="text"
               name="category"
               placeholder="category"
-              value={newEvent.category}
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({ ...newEvent, category: e.target.value });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("category") && (
+              <Alerts message={errorText.category[0]} />
+            )}
           </div>
         </div>
         <div className="flex flex-wrap -mx-3 mb-6">
@@ -110,12 +156,13 @@ const Create = () => {
               type="date"
               name="event_date_at"
               placeholder="Date event at"
-              value={newEvent.eventDateAt}
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({ ...newEvent, eventDateAt: e.target.value });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("event_date_at") && (
+              <Alerts message={errorText.event_date_at[0]} />
+            )}
           </div>
           <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -126,15 +173,13 @@ const Create = () => {
               type="date"
               name="event_date_end"
               placeholder="Date event end"
-              value={newEvent.eventDateEnd}
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({
-                  ...newEvent,
-                  eventDateEnd: e.target.value,
-                });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("event_date_end") && (
+              <Alerts message={errorText.event_date_end[0]} />
+            )}
           </div>
         </div>
         <div className="flex flex-wrap -mx-3 mb-6">
@@ -147,12 +192,30 @@ const Create = () => {
               type="text"
               name="type"
               placeholder="type"
-              value={newEvent.type}
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({ ...newEvent, type: e.target.value });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("type") && (
+              <Alerts message={errorText.type[0]} />
+            )}
+          </div>
+          <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+              Event place
+            </label>
+            <input
+              className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+              type="text"
+              name="event_place"
+              placeholder="place"
+              onChange={() => {
+                setErrorText(null);
+              }}
+            />
+            {errorText && errorText.hasOwnProperty("event_place") && (
+              <Alerts message={errorText.event_place[0]} />
+            )}
           </div>
         </div>
         <div className="flex flex-wrap -mx-3 mb-6">
@@ -164,12 +227,13 @@ const Create = () => {
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
               name="description"
               placeholder="description"
-              value={newEvent.description}
-              onChange={(e) => {
-                setErrorText("");
-                setNewEvent({ ...newEvent, description: e.target.value });
+              onChange={() => {
+                setErrorText(null);
               }}
             />
+            {errorText && errorText.hasOwnProperty("description") && (
+              <Alerts message={errorText.description[0]} />
+            )}
           </div>
         </div>
 

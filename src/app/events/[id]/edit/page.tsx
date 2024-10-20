@@ -2,16 +2,39 @@
 import React, { FormEvent, useEffect, useState } from "react";
 import { supabase } from "../../../../../lib/initSupabase";
 import { Database } from "../../../../../lib/schema";
-import { useRouter } from "next/navigation";
+import { z } from "zod";
+import Spinner from "@/app/components/UI/Spinner";
+import Alerts from "@/app/components/UI/alerts";
 
-type Event = Database["public"]["event"];
+type Event = Database["public"]["Tables"]["events"]["Update"];
+
+interface initialStateMessage {
+  name: string;
+  event_date_at: string;
+  event_date_end: string;
+  event_place: string;
+  category: string;
+  type: string;
+  description: string;
+}
 
 const Page = ({ params }: { params: { id: number } }) => {
-  const [event, setEvent] = useState<Event>(null);
-  const router = useRouter();
-  const [responseText, setResponseText] = useState("");
-  const [responseState, setResponseState] = useState(false);
-  const [errorText, setErrorText] = useState("");
+  const [event, setEvent] = useState<Event | null>(null);
+  const [responseText, setResponseText] = useState<string>("");
+  const [responseState, setResponseState] = useState<boolean>(false);
+  const [errorText, setErrorText] = useState<initialStateMessage | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const schema = z.object({
+    name: z.string().min(10),
+    event_date_at: z.string(),
+    event_date_end: z.string(),
+    category: z.string().min(4),
+    type: z.string(),
+    description: z.string(),
+    event_place: z.string(),
+  });
 
   useEffect(() => {
     const callEvent = async () => {
@@ -44,25 +67,61 @@ const Page = ({ params }: { params: { id: number } }) => {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-    const { data, error } = await supabase
-      .from("events")
-      .update({
-        name: event.name,
-        event_date_at: event.eventDateAt,
-        event_date_end: event.eventDateEnd,
-        category: event.category,
-        type: event.type,
-        description: event.description,
-      })
-      .eq("id", params.id)
-      .select();
+    if (isLoading) {
+      return <Spinner />;
+    }
 
-    setResponseState(true);
-    if (error) {
-      setResponseText("Error: " + error);
-    } else {
-      setResponseText("Your event has been updated!");
+    try {
+      const formData = new FormData(e.currentTarget);
+
+      const validatedFields = schema.safeParse({
+        name: formData.get("name"),
+        event_date_at: formData.get("event_date_at"),
+        event_date_end: formData.get("event_date_end"),
+        category: formData.get("category"),
+        type: formData.get("type"),
+        description: formData.get("description"),
+        event_place: formData.get("event_place"),
+      });
+
+      if (!validatedFields.success) {
+        const fieldErrors = validatedFields.error.flatten().fieldErrors;
+        setErrorText(fieldErrors);
+
+        return false;
+      }
+
+      const { data, error } = await supabase
+        .from("events")
+        .update({
+          name: formData.get("name"),
+          event_date_at: formData.get("event_date_at"),
+          event_date_end: formData.get("event_date_end"),
+          category: formData.get("category"),
+          type: formData.get("type"),
+          description: formData.get("description"),
+          event_place: formData.get("event_place"),
+        })
+        .eq("id", params.id)
+        .select();
+
+      setResponseState(true);
+      if (error) {
+        setResponseText("Error: " + error);
+      } else {
+        setResponseText("Your event has been updated!");
+      }
+    } catch (error) {
+      // Capture the error message to display to the user
+      if (error instanceof Error) {
+        let errorMessage = error.message;
+        setError(errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -84,13 +143,15 @@ const Page = ({ params }: { params: { id: number } }) => {
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
                   type="text"
                   placeholder="Name event"
-                  value={event?.name}
+                  defaultValue={event?.name}
                   name="name"
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({ ...event, name: e.target.value });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("name") && (
+                  <Alerts message={errorText.name[0]} />
+                )}
               </div>
               <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
                 <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -101,12 +162,14 @@ const Page = ({ params }: { params: { id: number } }) => {
                   type="text"
                   name="category"
                   placeholder="category"
-                  value={event?.category}
+                  defaultValue={event?.category}
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({ ...event, category: e.target.value });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("category") && (
+                  <Alerts message={errorText.category[0]} />
+                )}
               </div>
             </div>
             <div className="flex flex-wrap -mx-3 mb-6">
@@ -119,12 +182,14 @@ const Page = ({ params }: { params: { id: number } }) => {
                   type="date"
                   name="event_date_at"
                   placeholder="Date event at"
-                  value={event?.event_date_at}
+                  defaultValue={event?.event_date_at}
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({ ...event, event_date_at: e.target.value });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("event_date_at") && (
+                  <Alerts message={errorText.event_date_at[0]} />
+                )}
               </div>
               <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
                 <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -135,15 +200,14 @@ const Page = ({ params }: { params: { id: number } }) => {
                   type="date"
                   name="event_date_end"
                   placeholder="Date event end"
-                  value={event?.event_date_end}
+                  defaultValue={event?.event_date_end}
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({
-                      ...event,
-                      event_date_end: e.target.value,
-                    });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("event_date_end") && (
+                  <Alerts message={errorText.event_date_end[0]} />
+                )}
               </div>
             </div>
             <div className="flex flex-wrap -mx-3 mb-6">
@@ -156,12 +220,32 @@ const Page = ({ params }: { params: { id: number } }) => {
                   type="text"
                   name="type"
                   placeholder="type"
-                  value={event?.type}
+                  defaultValue={event?.type}
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({ ...event, type: e.target.value });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("type") && (
+                  <Alerts message={errorText.type[0]} />
+                )}
+              </div>
+              <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+                <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+                  Event place
+                </label>
+                <input
+                  className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+                  type="text"
+                  defaultValue={event?.event_place}
+                  name="event_place"
+                  placeholder="place"
+                  onChange={() => {
+                    setErrorText(null);
+                  }}
+                />
+                {errorText && errorText.hasOwnProperty("event_place") && (
+                  <Alerts message={errorText.event_place[0]} />
+                )}
               </div>
             </div>
             <div className="flex flex-wrap -mx-3 mb-6">
@@ -173,12 +257,14 @@ const Page = ({ params }: { params: { id: number } }) => {
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
                   name="description"
                   placeholder="description"
-                  value={event?.description}
+                  defaultValue={event?.description}
                   onChange={(e) => {
-                    setErrorText("");
-                    setEvent({ ...event, description: e.target.value });
+                    setErrorText(null);
                   }}
                 />
+                {errorText && errorText.hasOwnProperty("description") && (
+                  <Alerts message={errorText.description[0]} />
+                )}
               </div>
             </div>
 
