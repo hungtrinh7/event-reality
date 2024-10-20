@@ -4,6 +4,7 @@ import useUnifiedSession from "../components/Auth/useUnifiedSession";
 import { z } from "zod";
 import Alerts from "../components/UI/alerts";
 import Spinner from "../components/UI/Spinner";
+import { eventCategories, eventTypes } from "../../../lib/data";
 
 interface initialStateMessage {
   name: string;
@@ -25,10 +26,10 @@ const Create = () => {
   const [error, setError] = useState<string | null>(null);
 
   const schema = z.object({
-    name: z.string().min(10),
+    name: z.string().min(3),
     event_date_at: z.string(),
     event_date_end: z.string(),
-    category: z.string().min(4),
+    category: z.string(),
     type: z.string(),
     description: z.string(),
     event_place: z.string(),
@@ -132,15 +133,17 @@ const Create = () => {
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
               Event category
             </label>
-            <input
+            <select
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-              type="text"
               name="category"
-              placeholder="category"
               onChange={() => {
                 setErrorText(null);
               }}
-            />
+            >
+              {eventCategories.map((category) => (
+                <option value={category}>{category}</option>
+              ))}
+            </select>
             {errorText && errorText.hasOwnProperty("category") && (
               <Alerts message={errorText.category[0]} />
             )}
@@ -187,15 +190,17 @@ const Create = () => {
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
               Event type
             </label>
-            <input
+            <select
               className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-              type="text"
               name="type"
-              placeholder="type"
               onChange={() => {
                 setErrorText(null);
               }}
-            />
+            >
+              {eventTypes.map((type) => (
+                <option value={type}>{type}</option>
+              ))}
+            </select>
             {errorText && errorText.hasOwnProperty("type") && (
               <Alerts message={errorText.type[0]} />
             )}

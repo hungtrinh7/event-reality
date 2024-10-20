@@ -5,6 +5,7 @@ import { Database } from "../../../../../lib/schema";
 import { z } from "zod";
 import Spinner from "@/app/components/UI/Spinner";
 import Alerts from "@/app/components/UI/alerts";
+import { eventCategories, eventTypes } from "../../../../../lib/data";
 
 type Event = Database["public"]["Tables"]["events"]["Update"];
 
@@ -27,10 +28,10 @@ const Page = ({ params }: { params: { id: number } }) => {
   const [error, setError] = useState<string | null>(null);
 
   const schema = z.object({
-    name: z.string().min(10),
+    name: z.string().min(3),
     event_date_at: z.string(),
     event_date_end: z.string(),
-    category: z.string().min(4),
+    category: z.string(),
     type: z.string(),
     description: z.string(),
     event_place: z.string(),
@@ -157,16 +158,18 @@ const Page = ({ params }: { params: { id: number } }) => {
                 <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                   Event category
                 </label>
-                <input
+                <select
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  type="text"
                   name="category"
-                  placeholder="category"
                   defaultValue={event?.category}
-                  onChange={(e) => {
+                  onChange={() => {
                     setErrorText(null);
                   }}
-                />
+                >
+                  {eventCategories.map((category) => (
+                    <option value={category}>{category}</option>
+                  ))}
+                </select>
                 {errorText && errorText.hasOwnProperty("category") && (
                   <Alerts message={errorText.category[0]} />
                 )}
@@ -215,16 +218,17 @@ const Page = ({ params }: { params: { id: number } }) => {
                 <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
                   Event type
                 </label>
-                <input
+                <select
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  type="text"
                   name="type"
-                  placeholder="type"
-                  defaultValue={event?.type}
-                  onChange={(e) => {
+                  onChange={() => {
                     setErrorText(null);
                   }}
-                />
+                >
+                  {eventTypes.map((type) => (
+                    <option value={type}>{type}</option>
+                  ))}
+                </select>
                 {errorText && errorText.hasOwnProperty("type") && (
                   <Alerts message={errorText.type[0]} />
                 )}
